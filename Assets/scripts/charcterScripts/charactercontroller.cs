@@ -3,6 +3,8 @@ using UnityEngine;
 
 public class charactercontroller : MonoBehaviour
 {
+
+    private OyuncuEnvanter _envanter;
     // Karakter Kontrolcü bileþeni
     private CharacterController _controller;
 
@@ -28,6 +30,7 @@ public class charactercontroller : MonoBehaviour
     public float minBakýþAçýsý = -90f;
     void Start()
     {
+        _envanter = GetComponent<OyuncuEnvanter>();
         // Baþlangýçta CharacterController bileþenini al
         _controller = GetComponent<CharacterController>();
         // Oyun baþladýðýnda fare imlecini kilitler ve gizler.
@@ -43,14 +46,20 @@ public class charactercontroller : MonoBehaviour
 
     void Update()
     {
-        // 1. Yatay Hareket Giriþlerini Al
-        float yatayGirdi = Input.GetAxis("Horizontal"); // A/D veya Sol/Sað Ok
-        float dikeyGirdi = Input.GetAxis("Vertical");   // W/S veya Yukarý/Aþaðý Ok
+        if (CraftingUIManager.Instance != null && CraftingUIManager.Instance.IsPanelOpen)
+        {
+            // ...bu karenin Update metodundan hemen çýk.
+            // Aþaðýdaki hareket ve rotasyon kodlarý ÇALIÞMAYACAK.
+            return;
+        }
+        // ***************************************************************
 
-        // Karakterin yerel uzayýna (ileri, geri, saða, sola) göre hareket vektörünü hesapla
+
+        // YÜRÜME (Bu kodlar artýk sadece UI kapalýyken çalýþýr)
+        float yatayGirdi = Input.GetAxis("Horizontal");
+        float dikeyGirdi = Input.GetAxis("Vertical");
+
         Vector3 hareket = transform.right * yatayGirdi + transform.forward * dikeyGirdi;
-
-        // Hýzý ve Time.deltaTime ile çarp
         hareket *= yürümeHizi;
 
         // 2. Yerçekimi ve Zýplama (Dikey Hareket)
@@ -102,6 +111,42 @@ public class charactercontroller : MonoBehaviour
         if (kameraTransform != null)
         {
             kameraTransform.localRotation = Quaternion.Euler(_xRotasyon, 0f, 0f);
+        }
+        HotbarInputKontrol();
+    }
+    private void HotbarInputKontrol()
+    {
+        if (_envanter == null) return;
+
+        // 1'den 8'e kadar tuslari kontrol et
+        for (int i = 0; i < _envanter.hotbarBoyutu; i++)
+        {
+            // Eðer bir sayý tuþuna basýlýrsa...
+            if (Input.GetKeyDown(KeyCode.Alpha1 + i))
+            {
+                // ...oyuncunun seçtiði slotu güncelle...
+                _envanter.seciliSlotIndex = i;
+
+                // ...VE HEMEN ARDINDAN UI YÖNETÝCÝSÝNE GÖRSELÝ GÜNCELLEMESÝNÝ SÖYLE!
+                if (InventoryUIManager.Instance != null)
+                {
+                    InventoryUIManager.Instance.HighlightGuncelle();
+                }
+
+                Debug.Log($"{i + 1}. yuva secildi.");
+                return;
+            }
+        }
+        // F tusu = Kullan
+        if (Input.GetKeyDown(KeyCode.F))
+        {
+            _envanter.SeciliEsyayiKullan();
+        }
+
+        // Q tusu = At
+        if (Input.GetKeyDown(KeyCode.Q))
+        {
+            _envanter.SeciliEsyayiAt();
         }
     }
 }

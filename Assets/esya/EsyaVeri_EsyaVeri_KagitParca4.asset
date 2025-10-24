@@ -15,7 +15,8 @@ MonoBehaviour:
   esyaTipi: 6
   gorunurAd: "kag\u0131t parca 4"
   aciklama: Bu bir oyundaki esyadir.
-  ikon: {fileID: 0}
+  ikon: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
   maksIstifBoyutu: 1
   canEtkisi: 0
   kullanilabilir: 0
+  esyaModelPrefab: {fileID: 9126224730366779859, guid: 0922e426dddfab64f8bc7616d57016f7, type: 3}

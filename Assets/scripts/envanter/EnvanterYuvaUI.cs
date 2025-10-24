@@ -10,10 +10,8 @@ public class EnvanterYuvaUI : MonoBehaviour
 
     // YENÝ EKLENEN: Esya ismini gosterecek metin
     public TextMeshProUGUI isimMetni;
-
-    /// <summary>
-    /// Bu yuvayi, belirtilen esya verisi ile gunceller.
-    /// </summary>
+    public GameObject secimCercevesi;
+ 
     public void YuvayiGuncelle(EsyaVeriSO esyaVerisi, int miktar)
     {
         if (esyaVerisi != null)
@@ -43,7 +41,13 @@ public class EnvanterYuvaUI : MonoBehaviour
             Temizle();
         }
     }
-
+    public void SecimiAyarla(bool seciliMi)
+    {
+        if (secimCercevesi != null)
+        {
+            secimCercevesi.SetActive(seciliMi);
+        }
+    }
     /// <summary>
     /// Yuvayi bosaltir (ikonu ve metinleri gizler).
     /// </summary>

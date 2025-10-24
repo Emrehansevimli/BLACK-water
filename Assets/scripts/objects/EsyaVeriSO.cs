@@ -20,6 +20,10 @@ public class EsyaVeriSO : ScriptableObject
     public int maksIstifBoyutu = 99; // Kac tanesinin ust uste binebilecegi (Stack size)
 
     [Header("Kullaným Etkisi")]
-    public float canEtkisi = 0f; // Can barýna etkisi (Yemekler icin)
-    public bool kullanilabilir = false; // Tuketilebilir mi?
+    public float canEtkisi = 0f; 
+    public bool kullanilabilir = false; 
+
+    [Header("Dünya Modeli")]
+    // YENÝ EKLENEN: Esya atildiginda dunyada olusacak 3D model.
+    public GameObject esyaModelPrefab;
 }

@@ -1,108 +1,101 @@
-
 using UnityEngine;
-using System.Collections.Generic;
 
-// EsyaTipi enum'u bu dosyanin uzerine tasiyabilirsiniz veya ayri dosyada birakabilirsiniz.
+// Bu yapý, tek bir envanter yuvasýnýn verisini tutar.
+[System.Serializable]
+public struct EnvanterYuvasi
+{
+    public EsyaTipi tip;
+    public int miktar;
+}
 
 public class OyuncuEnvanter : MonoBehaviour
 {
-    // Dictionary: EsyaTipi ve o esyadan kac tane oldugunu tutar. (Modular Yapi)
-    public Dictionary<EsyaTipi, int> envanter = new Dictionary<EsyaTipi, int>();
+    public int hotbarBoyutu = 8;
+    public EnvanterYuvasi[] hotbarSlotlari;
 
-    // Karakterin can durumunu tutar (esya kullanimi icin gerekli)
+    public int seciliSlotIndex = 0;
     private KarakterDurum _karakterDurum;
+
+    void Awake()
+    {
+        hotbarSlotlari = new EnvanterYuvasi[hotbarBoyutu];
+    }
 
     void Start()
     {
         _karakterDurum = GetComponent<KarakterDurum>();
     }
 
-    /// <summary>
-    /// Envantere belirtilen turdeki esyayi ekler (Toplanabilir.cs tarafindan cagrýlýr).
-    /// </summary>
-    public bool EsyaEkle(EsyaTipi tip, int miktar = 1)
+    public bool EsyaEkle(EsyaTipi tip)
     {
-        if (miktar <= 0) return false;
+        EsyaVeriSO veri = InventoryUIManager.Instance.VeriGetir(tip);
+        if (veri == null) return false;
 
-        if (envanter.ContainsKey(tip))
+        // 1. ADIM: Zaten var olan ve dolu olmayan bir yuvayý ara
+        for (int i = 0; i < hotbarBoyutu; i++)
         {
-            envanter[tip] += miktar;
-        }
-        else
-        {
-            envanter.Add(tip, miktar);
-        }
-
-        Debug.Log($"[Envanter] {miktar} adet {tip} eklendi. Toplam: {envanter[tip]}");
-        // Buraya UI GUNCELLEME KODU gelecek
-        if (InventoryUIManager.Instance != null)
-        {
-            InventoryUIManager.Instance.EnvanteriGuncelle();
-        }
-        return true;
-    }
-
-    /// <summary>
-    /// Envanterdeki bir esyayi kullanir (Esya kullanma mekanigi).
-    /// </summary>
-    public bool EsyaKullan(EsyaTipi tip, int miktar = 1)
-    {
-        if (!_karakterDurum)
-        {
-            Debug.LogError("KarakterDurum scripti bulunamadi!");
-            return false;
-        }
-
-        if (!envanter.ContainsKey(tip) || envanter[tip] < miktar)
-        {
-            Debug.Log($"[Envanter] Yeterli {tip} bulunmuyor.");
-            return false;
-        }
-
-        bool kullanildi = false;
-
-        // ** MODÜLER KULLANIM MANTIÐI **
-        switch (tip)
-        {
-            case EsyaTipi.Elma:
-                _karakterDurum.CanArtir(15); // Elma 15 can versin
-                kullanildi = true;
-                break;
-            case EsyaTipi.Sandvic:
-                _karakterDurum.CanArtir(40); // Sandviç 40 can versin
-                kullanildi = true;
-                break;
-
-            
-            case EsyaTipi.KagitParca_1:
-                kullanildi = true;
-                break;
-            case EsyaTipi.KagitParca_2:
-                kullanildi = true;
-                break;
-            case EsyaTipi.KagitParca_3:
-                kullanildi = true;
-                break;
-            case EsyaTipi.KagitParca_4:
-                kullanildi = true;
-                break;
-            case EsyaTipi.KirmiziAnahtar:
-            case EsyaTipi.büyüsayfasý:
-                Debug.Log($"{tip} kullanilamaz, sadece envanterde tutulur.");
-                return false;
-        }
-
-        // Kullaným baþarýlýysa envanterden düþ
-        if (kullanildi)
-        {
-            envanter[tip] -= miktar;
-            if (envanter[tip] <= 0)
+            if (hotbarSlotlari[i].tip == tip && hotbarSlotlari[i].miktar < veri.maksIstifBoyutu)
             {
-                envanter.Remove(tip);
+                hotbarSlotlari[i].miktar++;
+                InventoryUIManager.Instance.EnvanteriGuncelle();
+                return true;
             }
         }
 
-        return kullanildi;
+        // 2. ADIM: Boþ bir yuva ara
+        for (int i = 0; i < hotbarBoyutu; i++)
+        {
+            if (hotbarSlotlari[i].miktar == 0) // Boþ yuva = miktarý 0 olan yuva
+            {
+                hotbarSlotlari[i].tip = tip;
+                hotbarSlotlari[i].miktar = 1;
+                InventoryUIManager.Instance.EnvanteriGuncelle();
+                return true;
+            }
+        }
+
+        Debug.Log("Hotbar dolu, esya eklenemedi.");
+        return false;
+    }
+
+    public void SeciliEsyayiKullan()
+    {
+        EnvanterYuvasi seciliYuva = hotbarSlotlari[seciliSlotIndex];
+        if (seciliYuva.miktar > 0)
+        {
+            EsyaVeriSO veri = InventoryUIManager.Instance.VeriGetir(seciliYuva.tip);
+            if (veri != null && veri.kullanilabilir)
+            {
+                if (_karakterDurum != null) { _karakterDurum.CanArtir(veri.canEtkisi); }
+
+                hotbarSlotlari[seciliSlotIndex].miktar--;
+                if (hotbarSlotlari[seciliSlotIndex].miktar <= 0)
+                {
+                    hotbarSlotlari[seciliSlotIndex].tip = EsyaTipi.Bos;
+                }
+                InventoryUIManager.Instance.EnvanteriGuncelle();
+            }
+        }
+    }
+
+    public void SeciliEsyayiAt()
+    {
+        EnvanterYuvasi seciliYuva = hotbarSlotlari[seciliSlotIndex];
+        if (seciliYuva.miktar > 0)
+        {
+            EsyaVeriSO veri = InventoryUIManager.Instance.VeriGetir(seciliYuva.tip);
+            if (veri != null && veri.esyaModelPrefab != null)
+            {
+                Vector3 atmaPozisyonu = transform.position + transform.forward * 2f + Vector3.up * 0.5f;
+                Instantiate(veri.esyaModelPrefab, atmaPozisyonu, Quaternion.identity);
+            }
+
+            hotbarSlotlari[seciliSlotIndex].miktar--;
+            if (hotbarSlotlari[seciliSlotIndex].miktar <= 0)
+            {
+                hotbarSlotlari[seciliSlotIndex].tip = EsyaTipi.Bos;
+            }
+            InventoryUIManager.Instance.EnvanteriGuncelle();
+        }
     }
 }
-

@@ -19,3 +19,4 @@ MonoBehaviour:
   maksIstifBoyutu: 1
   canEtkisi: 0
   kullanilabilir: 0
+  esyaModelPrefab: {fileID: 9126224730366779859, guid: 0922e426dddfab64f8bc7616d57016f7, type: 3}
