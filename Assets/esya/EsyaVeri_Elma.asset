@@ -19,3 +19,4 @@ MonoBehaviour:
   maksIstifBoyutu: 99
   canEtkisi: 15
   kullanilabilir: 1
+  esyaModelPrefab: {fileID: 0}

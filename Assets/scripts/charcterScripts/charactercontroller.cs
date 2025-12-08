@@ -5,14 +5,14 @@ public class charactercontroller : MonoBehaviour
 {
 
     private OyuncuEnvanter _envanter;
-    // Karakter Kontrolcü bileþeni
     private CharacterController _controller;
+    private KarakterDurum _karakterDurum;
 
     // Hareket Hýzlarý
     public float yürümeHizi = 6.0f;
     public float zýplamaKuvveti = 8.0f;
     public float yercekimi = 20.0f;
-
+    public float kosmaHizi = 10.0f;
     // Dikey (Y ekseni) hýzý tutan vektör
     private Vector3 _hizVektoru;
 
@@ -31,9 +31,9 @@ public class charactercontroller : MonoBehaviour
     void Start()
     {
         _envanter = GetComponent<OyuncuEnvanter>();
-        // Baþlangýçta CharacterController bileþenini al
         _controller = GetComponent<CharacterController>();
-        // Oyun baþladýðýnda fare imlecini kilitler ve gizler.
+        _karakterDurum = GetComponent<KarakterDurum>();
+
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
@@ -59,11 +59,45 @@ public class charactercontroller : MonoBehaviour
         float yatayGirdi = Input.GetAxis("Horizontal");
         float dikeyGirdi = Input.GetAxis("Vertical");
 
+        bool hareketEdiyor = yatayGirdi != 0 || dikeyGirdi != 0;
+        bool sprintBasiliyor = Input.GetKey(KeyCode.LeftShift);
+        bool kosabilirMi = sprintBasiliyor && hareketEdiyor && _karakterDurum.StaminaVarMi();
+
+        float mevcutHiz;
+        if (kosabilirMi)
+        {
+            mevcutHiz = kosmaHizi;
+            _karakterDurum.staminaKullaniliyor = true; // KarakterDurum'a haber ver: Staminayý tüket!
+        }
+  
+        if (kosabilirMi)
+        {
+            mevcutHiz = kosmaHizi;
+            _karakterDurum.staminaKullaniliyor = true; // KarakterDurum'a haber ver: Staminayý tüket!
+        }
+        else
+        {
+            mevcutHiz = yürümeHizi;
+            _karakterDurum.staminaKullaniliyor = false; // KarakterDurum'a haber ver: Staminayý yenile!
+        }
+
         Vector3 hareket = transform.right * yatayGirdi + transform.forward * dikeyGirdi;
-        hareket *= yürümeHizi;
+        hareket = hareket.normalized * mevcutHiz;
 
-        // 2. Yerçekimi ve Zýplama (Dikey Hareket)
+        // 4. YERCEKIMI & ZIPLAMA
+        if (_controller.isGrounded)
+        {
+            _hizVektoru.y = 0f;
+            if (Input.GetButtonDown("Jump"))
+            {
+                _hizVektoru.y = zýplamaKuvveti;
+            }
+        }
+        _hizVektoru.y -= yercekimi * Time.deltaTime;
 
+        // 5. HAREKET UYGULA
+        Vector3 sonHareket = hareket + _hizVektoru;
+        _controller.Move(sonHareket * Time.deltaTime);
         // Karakter yerdeyse:
         if (_controller.isGrounded)
         {
@@ -78,30 +112,14 @@ public class charactercontroller : MonoBehaviour
             }
         }
 
-        // Yerçekimini her karede uygula (Time.deltaTime ile kare hýzýndan baðýmsýz hale getir)
-        _hizVektoru.y -= yercekimi * Time.deltaTime;
 
-        // 3. Karakteri Hareket Ettir
-
-        // Yatay hareket vektörünü dikey hýz ile birleþtir
-        // Bu önemli: _hizVektoru.y, yerçekimi ve zýplamayý kontrol eder.
-        Vector3 sonHareket = hareket + _hizVektoru;
-
-        // Character Controller'ýn Move metodu ile karakteri hareket ettir.
-        // **Move() metodu, Time.deltaTime gerektirmez** çünkü sonHareket vektörünün bir hýz (velocity) deðil,
-        // bu karede karakterin ne kadar hareket edeceði (delta) olmasý beklenir. 
-        // Ancak bu kodda yürüme hareketini zaten çarptýðýmýz için sadece Character Controller'ýn Move
-        // metodunun beklentisini karþýlamak amacýyla sonHareket vektörünü direkt kullanýyoruz.
-        _controller.Move(sonHareket * Time.deltaTime);
+       
         // Fare girdilerini al
         float fareX = Input.GetAxis("Mouse X") * fareHassasiyeti * Time.deltaTime;
         float fareY = Input.GetAxis("Mouse Y") * fareHassasiyeti * Time.deltaTime;
 
-        // 1. Yatay Karakter Rotasyonu (Y Ekseni)
-        // Karakterin ana objesini döndürür (Saða/Sola Bakma)
-        transform.Rotate(Vector3.up * fareX);
 
-        // 2. Dikey Kamera Rotasyonu (X Ekseni)
+        transform.Rotate(Vector3.up * fareX);
         _xRotasyon -= fareY;
 
         // Bakýþ açýsýný sýnýrla

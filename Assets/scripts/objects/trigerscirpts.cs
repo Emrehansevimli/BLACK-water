@@ -8,7 +8,7 @@ public class trigerscripts : MonoBehaviour
     public KeyCode iletisimTusu = KeyCode.E;
 
     private bool _oyuncuAlaniIcinde = false;
-    private IIletisim _iletisimHedefi; // Yeni arayüz adi
+    private IIletisim _iletisimHedefi;
     private GameObject _girenOyuncu;
     private KarakterDurum _oyuncuIhtiyac;
 

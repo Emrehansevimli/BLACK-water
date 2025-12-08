@@ -1,4 +1,6 @@
 using UnityEngine;
+using UnityEngine.UI;
+
 
 public class KarakterDurum : MonoBehaviour
 {
@@ -7,32 +9,78 @@ public class KarakterDurum : MonoBehaviour
     public float mevcutIhtiyac = 0f;
     public float ihtiyacArtisHizi = 1f; // Saniye basina artis
     public float giderilmeMiktari = 100f; // Tek seferde giderilen miktar
+    public Slider canBariSlider;
+    public Slider staminaBariSlider;
 
     [Header("Maksimum Degerler")]
     private float _mevcutCan;
     public float maksimumIhtiyac = 100f;
     public float kritikSeviye = 80f;
-    //[Header("UI Geri Bildirim")]
-    // Not: Can barý veya metin guncellemesi icin daha sonra buraya UI referanslari eklenebilir.
-    // Simdilik sadece Debug.Log ile gosteriyoruz.
+    [Header("Stamina Degerleri")]
+    public float maksimumStamina = 100f;
+    [SerializeField] 
+    private float _mevcutStamina;
+    public float staminaTuketimHizi = 20f; // Saniyede ne kadar harcayacaðý
+    public float staminaYenilenmeHizi = 15f;
+    [HideInInspector]
+    public bool staminaKullaniliyor = false;
 
     void Start()
     {
-        // Oyun basladiginda cani maksimum seviyeye ayarla
-        _mevcutCan = maksimumCan;
-        Debug.Log($"Karakterin can degeri: {_mevcutCan} / {maksimumCan}");
+        _mevcutCan = 50;
+        _mevcutStamina = maksimumStamina; // Staminayý da doldur
+        GuncelleCanBari();
+        GuncelleStaminaBari();
     }
     void Update()
     {
-        // 1. Ýhtiyaci zamanla artir (Her zaman artýyor)
         mevcutIhtiyac += ihtiyacArtisHizi * Time.deltaTime;
         mevcutIhtiyac = Mathf.Min(mevcutIhtiyac, maksimumIhtiyac);
+        StaminaYonetimi();
 
-        // 2. Kritik seviye kontrolu (Opsiyonel: Ses/Gorsel uyari)
-       /* if (mevcutIhtiyac >= kritikSeviye && !UIManager.Instance.uyariGorunur)
+    }
+    private void GuncelleCanBari()
+    {
+        
+        if (canBariSlider != null)
         {
-            // Belki karakterin yüzü kýzarýr veya bir ses gelir.
-        }*/
+            float canYuzdesi = _mevcutCan / maksimumCan;
+            canBariSlider.value = canYuzdesi;
+        }
+    }
+    private void StaminaYonetimi()
+    {
+        if (staminaKullaniliyor)
+        {
+            // Hýzlý koþuyorsak staminayý tüket
+            _mevcutStamina -= staminaTuketimHizi * Time.deltaTime;
+        }
+        else
+        {
+            // Koþmuyorsak staminayý yenile
+            _mevcutStamina += staminaYenilenmeHizi * Time.deltaTime;
+        }
+
+        // Deðeri 0 ile maksimum arasýnda sýkýþtýr
+        _mevcutStamina = Mathf.Clamp(_mevcutStamina, 0f, maksimumStamina);
+
+        GuncelleStaminaBari();
+    }
+
+    // Stamina olup olmadýðýný kontrol eden public metot
+    public bool StaminaVarMi()
+    {
+        // Sadece 0'dan büyükse deðil, biraz pay býrakarak kontrol etmek daha iyi olabilir
+        return _mevcutStamina > 0.1f;
+    }
+
+    private void GuncelleStaminaBari()
+    {
+        if (staminaBariSlider != null)
+        {
+            float staminaYuzdesi = _mevcutStamina / maksimumStamina;
+            staminaBariSlider.value = staminaYuzdesi;
+        }
     }
     public bool IhtiyaciGider()
     {
@@ -54,30 +102,21 @@ public class KarakterDurum : MonoBehaviour
         {
             Debug.LogWarning("Can artirma miktari pozitif olmalidir.");
             return;
-        }
-
-        // Mevcut cani ekle
-        _mevcutCan += miktar;
-
-        // Cani maksimum degeri gecmeyecek sekilde sinirla
+        }       
+        _mevcutCan += miktar;    
         _mevcutCan = Mathf.Min(_mevcutCan, maksimumCan);
-
         Debug.Log($"{miktar} can kazanildi. Yeni can degeri: {_mevcutCan} / {maksimumCan}");
-
-        // Buraya UI Guncelleme metodu cagrýlabilir
+        GuncelleCanBari();
     }
 
-    /// <summary>
-    /// Karakterin canini belirtilen miktar kadar azaltir (Hasar Alma).
-    /// </summary>
-    /// <param name="hasar">Uygulanacak hasar degeri (pozitif olmali).</param>
     public void HasarAl(float hasar)
     {
         if (hasar <= 0) return;
 
         _mevcutCan -= hasar;
 
-        // Can 0'in altina duserse olum islemlerini baslat
+        GuncelleCanBari();
+        
         if (_mevcutCan <= 0)
         {
             _mevcutCan = 0;
@@ -92,7 +131,6 @@ public class KarakterDurum : MonoBehaviour
     {
         Debug.Log($"{gameObject.name} hayatini kaybetti!");
 
-        // Karakteri yok etme, yeniden dogma veya oyun sonu ekranini tetikleme islemleri buraya gelir.
-        // Ornek: GetComponent<OyuncuKontrol>().enabled = false;
+        GuncelleCanBari();
     }
 }
