@@ -1,98 +1,142 @@
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using System.Collections.Generic; // Listeler için gerekli
 
 public class TicaretUIManager : MonoBehaviour
 {
     public static TicaretUIManager Instance;
 
     [Header("UI Referanslari")]
-    public GameObject ticaretPaneli; // Ana panel (Adim 1)
-    public Transform satisListesiIcerik; // Scroll View'in Content objesi
-    public GameObject ticaretSlotPrefab; // Her bir eþya için oluþturulacak prefab
+    public GameObject ticaretPaneli;
+    public GameObject ticaretSlotPrefab; // Slot prefabý
+
+    [Header("Liste Alanlarý")]
+    public Transform saticiContent; // SOL Taraf (Satýcýnýn mallarý) -> Eskiden 'satisListesiIcerik'ti
+    public Transform oyuncuContent; // SAÐ Taraf (Oyuncunun mallarý) -> YENÝ
 
     [Header("Veri Referanslari")]
-    public EsyaTipi[] satilacakEsyalar; // NPC'nin sattýðý eþya tipleri
+    public List<EsyaTipi> satilacakEsyalar; // NPC'nin sattýðý eþyalar
+    public TextMeshProUGUI oyuncuParaText;
 
-    public bool _isOpen = false;
+    private bool _isOpen = false;
+    public bool IsOpen => _isOpen; // Dýþarýdan okumak için property
 
     void Awake()
     {
-        // Singleton kontrolü
-        if (Instance == null)
-            Instance = this;
-        else
-            Destroy(gameObject);
+        if (Instance == null) Instance = this;
+        else Destroy(gameObject);
     }
 
     void Start()
     {
-        // Baþlangýçta paneli kapalý tut
-        ticaretPaneli.SetActive(false);
+        if (ticaretPaneli != null) ticaretPaneli.SetActive(false);
     }
 
-    // ***************************************************************
-    // ARAYÜZ KONTROLÜ
-    // ***************************************************************
-    public bool IsOpen
-    {
-        get { return _isOpen; }
-    }
+    // AÇMA - KAPAMA ÝÞLEMLERÝ
     public void PaneliAc()
     {
         if (ticaretPaneli == null)
         {
-            Debug.LogError("TICARET PANELI HATA: TicaretPaneli objesi Inspector'da baglanmamis!");
-            return; // Ýþlemi durdur
+            Debug.LogError("HATA: Ticaret Paneli Inspector'da atanmamýþ!");
+            return;
         }
-        Debug.Log("Ticaret Paneli ACILIYOR...");
+
         _isOpen = true;
         ticaretPaneli.SetActive(true);
+
+        // Mouse'u aç
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
-        
-        // Listeyi her açýlýþta yeniden oluþtur (fiyatlar/stok deðiþebilir)
-        ListeyiDoldur();
+
+        // 1. Parayý Göster
+        ParaGuncelle();
+
+        // 2. Envanter Panelini de Aç
+        if (InventoryUIManager.Instance != null)
+        {
+            InventoryUIManager.Instance.EnvanterAcKapat(true);
+        }
+
+        // 3. Ýki Listeyi de Doldur
+        ListeleriYenile();
     }
 
     public void PaneliKapat()
     {
         _isOpen = false;
         ticaretPaneli.SetActive(false);
+
+        // Mouse'u kilitle
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+
+        // Envanteri kapat
+        if (InventoryUIManager.Instance != null)
+        {
+            InventoryUIManager.Instance.EnvanterAcKapat(false);
+        }
     }
 
-    // ***************************************************************
-    // LÝSTE DOLDURMA MANTIÐI
-    // ***************************************************************
-
-    void ListeyiDoldur()
+    // LÝSTE DOLDURMA ÝÞLEMLERÝ
+    public void ListeleriYenile()
     {
-        // Önce eski slotlari temizle
-        foreach (Transform child in satisListesiIcerik)
-        {
-            Destroy(child.gameObject);
-        }
+        SaticiListesiniDoldur();
+        OyuncuListesiniDoldur();
+    }
 
-        // Satýlacak her eþya için slot oluþtur
+    void SaticiListesiniDoldur()
+    {
+        // Temizlik
+        foreach (Transform child in saticiContent) Destroy(child.gameObject);
+
+        // Satýcý Ürünlerini Diz
         foreach (EsyaTipi tip in satilacakEsyalar)
         {
-            // InventoryUIManager'dan eþya verisini çekmek için VeriGetir metodu gereklidir.
             EsyaVeriSO veri = InventoryUIManager.Instance.VeriGetir(tip);
-
             if (veri != null)
             {
-                // Yeni slotu oluþtur
-                GameObject slot = Instantiate(ticaretSlotPrefab, satisListesiIcerik);
+                GameObject slot = Instantiate(ticaretSlotPrefab, saticiContent);
+                // FALSE = Satýn Alma Modu (Marketteyiz)
+                slot.GetComponent<TicaretSlot>().SlotuKur(veri, false);
+            }
+        }
+    }
 
-                // TicaretSlot bileþenini al ve verileri ata
-                TicaretSlot slotScript = slot.GetComponent<TicaretSlot>();
-                if (slotScript != null)
+    public void OyuncuListesiniDoldur()
+    {
+        // Temizlik
+        foreach (Transform child in oyuncuContent) Destroy(child.gameObject);
+
+        // Oyuncunun Envanterine Ulaþ
+        OyuncuEnvanter envanter = FindObjectOfType<OyuncuEnvanter>();
+
+        if (envanter != null)
+        {
+            foreach (var slotVerisi in envanter.hotbarSlotlari)
+            {
+                // Slot boþ deðilse listeye ekle
+                if (slotVerisi.miktar > 0)
                 {
-                    slotScript.Eslestir(veri);
+                    EsyaVeriSO veri = InventoryUIManager.Instance.VeriGetir(slotVerisi.tip);
+                    if (veri != null)
+                    {
+                        GameObject yeniSlot = Instantiate(ticaretSlotPrefab, oyuncuContent);
+                        // TRUE = Satýþ Modu (Kendi çantamýzdayýz)
+                        yeniSlot.GetComponent<TicaretSlot>().SlotuKur(veri, true);
+                    }
                 }
             }
+        }
+    }
+
+    public void ParaGuncelle()
+    {
+        KarakterDurum durum = FindObjectOfType<KarakterDurum>();
+        if (durum != null && oyuncuParaText != null)
+        {
+            // MevcutPara property'sini kullanýyoruz
+            oyuncuParaText.text = "Para: " + durum.MevcutPara.ToString();
         }
     }
 }

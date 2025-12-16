@@ -26,6 +26,8 @@ public class InventoryUIManager : MonoBehaviour
     private OyuncuEnvanter _envanter;
 
     private List<EnvanterYuvaUI> _yuvaUIListesi = new List<EnvanterYuvaUI>();
+    [Header("Panel Kontrolü")]
+    public GameObject envanterPanel;
     void Awake()
     {
         // Singleton yapýsý: Instance'ý bu objeye atar.
@@ -126,5 +128,24 @@ public class InventoryUIManager : MonoBehaviour
         }
         return null;
     }
-    
+    public void EnvanterAcKapat(bool acilsinMi)
+    {
+       
+        if (envanterPanel != null)
+        {
+            Debug.Log("Envanter Paneli Durumu Deðiþiyor: " + acilsinMi);
+            envanterPanel.SetActive(acilsinMi);
+
+            // Panel açýldýðýnda verilerin güncel olduðundan emin olalým
+            if (acilsinMi)
+            {
+                EnvanteriGuncelle();
+            }
+        }
+        else
+        {
+            Debug.LogWarning("InventoryUIManager: 'envanterPanel' Inspector'da atanmamýþ!");
+        }
+    }
+
 }

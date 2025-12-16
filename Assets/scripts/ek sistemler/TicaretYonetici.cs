@@ -2,87 +2,97 @@ using UnityEngine;
 
 public class TicaretYonetici : MonoBehaviour
 {
+    // 1. HATA ÇÖZÜMÜ: Singleton Instance Tanýmý
+    public static TicaretYonetici Instance;
+
+    // Oyuncu referanslarý
+    private OyuncuEnvanter _oyuncuEnvanter;
     private KarakterDurum _karakterDurum;
-    public OyuncuEnvanter _oyuncuEnvanter;
+
+    void Awake()
+    {
+        // Singleton yapýsý (Instance hatasýný çözer)
+        if (Instance == null)
+            Instance = this;
+        else
+            Destroy(gameObject);
+    }
 
     void Start()
     {
-        // Oyuncu referanslarýný al
+        // Oyuncuyu ve gerekli scriptleri bul
         GameObject oyuncu = GameObject.FindGameObjectWithTag("Player");
         if (oyuncu != null)
         {
-            _karakterDurum = oyuncu.GetComponent<KarakterDurum>();
             _oyuncuEnvanter = oyuncu.GetComponent<OyuncuEnvanter>();
+            _karakterDurum = oyuncu.GetComponent<KarakterDurum>();
         }
         else
         {
-            Debug.LogError("Ticaret sistemi icin 'Player' tag'li obje bulunamadi.");
-            this.enabled = false;
+            Debug.LogError("TicaretYonetici: 'Player' tag'ine sahip oyuncu bulunamadý!");
         }
     }
 
-    // ***************************************************************
-    // SATIN ALMA ÝÞLEMÝ (Oyuncu NPC'den Alýr)
-    // ***************************************************************
+    // --- OYUNCU MARKETEN EÞYA ALIR ---
     public bool SatinAl(EsyaTipi esyaTipi, int miktar)
     {
-        if (miktar <= 0) return false;
+        // Gerekli referanslar yoksa iþlem yapma
+        if (_oyuncuEnvanter == null || _karakterDurum == null) return false;
 
-        // Eþya verisini bul
-        EsyaVeriSO veri = InventoryUIManager.Instance.VeriGetir(esyaTipi);
-        if (veri == null) return false;
+        EsyaVeriSO esyaVerisi = InventoryUIManager.Instance.VeriGetir(esyaTipi);
+        if (esyaVerisi == null) return false;
 
-        int toplamMaliyet = veri.satinAlmaFiyati * miktar;
+        int toplamTutar = esyaVerisi.satinAlmaFiyati * miktar;
 
-        // 1. Para Kontrolü
-        if (_karakterDurum.MevcutPara < toplamMaliyet)
+        // Parasý yetiyor mu?
+        if (_karakterDurum.MevcutPara >= toplamTutar)
         {
-            Debug.Log("Ticaret: Yetersiz bakiye!");
-            return false;
-        }
+            // Parayý düþ
+            bool paraOdendi = _karakterDurum.ParaCikar(toplamTutar);
 
-        // 2. Envanter Kontrolü ve Ekleme
-        if (_oyuncuEnvanter.EsyaEkle(esyaTipi, miktar))
-        {
-            // 3. Ýþlem Baþarýlý: Parayý Çýkar
-            _karakterDurum.ParaCikar(toplamMaliyet);
-            return true;
+            if (paraOdendi)
+            {
+                // Eþyayý envantere ekle
+                _oyuncuEnvanter.EsyaEkle(esyaTipi, miktar);
+
+                // UI Güncellemeleri
+                TicaretUIManager.Instance.ParaGuncelle();
+                if (InventoryUIManager.Instance != null) InventoryUIManager.Instance.EnvanteriGuncelle();
+
+                return true; // Ýþlem baþarýlý
+            }
         }
         else
         {
-            Debug.Log("Ticaret: Envanter dolu.");
-            return false;
+            Debug.Log("Yetersiz Bakiye!");
         }
+        return false; // Ýþlem baþarýsýz
     }
 
-    // ***************************************************************
-    // SATMA ÝÞLEMÝ (Oyuncu NPC'ye Satar)
-    // ***************************************************************
-    public bool Sat(EsyaTipi esyaTipi, int miktar)
+    // --- 2. HATA ÇÖZÜMÜ: OYUNCU MARKETE EÞYA SATAR ---
+    public void OyuncudanEsyaSatinAl(EsyaTipi esyaTipi)
     {
-        if (miktar <= 0) return false;
+        if (_oyuncuEnvanter == null || _karakterDurum == null) return;
 
-        // Eþya verisini bul
-        EsyaVeriSO veri = InventoryUIManager.Instance.VeriGetir(esyaTipi);
-        if (veri == null) return false;
-        if (!veri.satilabilirMi)
-        {
-            Debug.Log($"Ticaret: {esyaTipi} adli esya satilamaz.");
-            return false;
-        }
-        int toplamGelir = veri.satmaFiyati * miktar;
+        EsyaVeriSO esyaVerisi = InventoryUIManager.Instance.VeriGetir(esyaTipi);
+        if (esyaVerisi == null) return;
 
-        // 1. Envanter Kontrolü ve Çýkarma
-        if (_oyuncuEnvanter.EsyaCikar(esyaTipi, miktar))
+        // Satýþ fiyatý (Alýþ fiyatýnýn yarýsý)
+        int satisFiyati = Mathf.FloorToInt(esyaVerisi.satinAlmaFiyati / 2);
+
+        // Envanterden 1 tane sil
+        bool silindi = _oyuncuEnvanter.EsyaCikar(esyaTipi, 1);
+
+        if (silindi)
         {
-            // 2. Ýþlem Baþarýlý: Parayý Ekle
-            _karakterDurum.ParaEkle(toplamGelir);
-            return true;
-        }
-        else
-        {
-            Debug.Log("Ticaret: Satmak istediðiniz eþyadan yeterli miktarda yok.");
-            return false;
+            // Parayý ekle
+            _karakterDurum.ParaEkle(satisFiyati);
+
+            // UI Güncellemeleri
+            TicaretUIManager.Instance.ParaGuncelle(); // Para yazýsýný güncelle
+            TicaretUIManager.Instance.OyuncuListesiniDoldur(); // Listeyi yenile ki sayý düþsün
+
+            Debug.Log($"{esyaVerisi.gorunurAd} satýldý. Kazanýlan: {satisFiyati}");
         }
     }
 }

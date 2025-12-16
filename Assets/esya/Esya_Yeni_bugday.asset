@@ -16,7 +16,10 @@ MonoBehaviour:
   gorunurAd: bugday
   aciklama: Bu bir oyundaki esyadir.
   ikon: {fileID: 10915, guid: 0000000000000000f000000000000000, type: 0}
-  maksIstifBoyutu: 99
+  maxIstifBoyutu: 99
   canEtkisi: 10
-  kullanilabilir: 0
+  kullanilabilir: 1
   esyaModelPrefab: {fileID: 7043712618955224668, guid: 195792eff4e2d744b93badc085373213, type: 3}
+  satinAlmaFiyati: 10
+  satmaFiyati: 8
+  satilabilirMi: 1

@@ -8,62 +8,112 @@ public class TicaretSlot : MonoBehaviour
     public TextMeshProUGUI adText;
     public TextMeshProUGUI fiyatText;
     public Image ikonImage;
-    public Button satinAlButonu;
+    public Button islemButonu; // Adýný genel 'islemButonu' olarak düþünelim (Eski adý: satinAlButonu)
 
-    // Satýn alýnacak miktarý tutan input alaný
-    public TMP_InputField miktarInput;
+    [Header("Miktar ve Buton Yazisi")]
+    public TMP_InputField miktarInput; // Miktar giriþi
+    public TextMeshProUGUI butonYazisi; // Butonun üzerindeki "AL" veya "SAT" yazýsý
 
     private EsyaVeriSO _esyaVeri;
-    private TicaretYonetici _ticaretYonetici;
+    private bool _satisModu; // Bu slot bir satýþ slotu mu (oyuncunun envanteri) yoksa alýþ mý?
 
     void Start()
     {
-        // Ticaret Yöneticisi'ne eriþim
-        _ticaretYonetici = FindObjectOfType<TicaretYonetici>();
-        if (_ticaretYonetici == null)
+        // Singleton Instance kontrolü (Daha performanslý)
+        if (TicaretYonetici.Instance == null)
         {
             Debug.LogError("Sahnede TicaretYonetici bulunamadi!");
-            enabled = false;
+            islemButonu.interactable = false;
         }
-
-        // Butonun týklanma olayýný atama
-        satinAlButonu.onClick.AddListener(SatinAlmaIslemi);
     }
 
-    public void Eslestir(EsyaVeriSO veri)
+    // Bu fonksiyonu TicaretUIManager çaðýracak
+    // satisModu = TRUE ise -> Oyuncu Satýyor (Sað liste)
+    // satisModu = FALSE ise -> Oyuncu Alýyor (Sol liste)
+    public void SlotuKur(EsyaVeriSO veri, bool satisModu)
     {
         _esyaVeri = veri;
+        _satisModu = satisModu;
 
-        adText.text = veri.gorunurAd;
+        // 1. Temel Görselleri Ayarla
+        adText.text = veri.gorunurAd; // Senin deðiþken adýn
         ikonImage.sprite = veri.ikon;
-        fiyatText.text = $"Fiyat: {veri.satinAlmaFiyati} G"; // G: Gold (Altýn)
 
-        // Miktar varsayýlan olarak 1 olsun
-        miktarInput.text = "1";
+        // Varsayýlan miktar 1 olsun
+        if (miktarInput != null) miktarInput.text = "1";
+
+        // 2. Moduna Göre Fiyat ve Buton Ayarla
+        islemButonu.onClick.RemoveAllListeners(); // Eski týklama olaylarýný temizle
+
+        if (_satisModu)
+        {
+            // --- SATIÞ MODU (Oyuncunun Eþyasý) ---
+            int satisFiyati = Mathf.FloorToInt(veri.satinAlmaFiyati / 2); // Yarý fiyatýna satalým
+            fiyatText.text = $"{satisFiyati} G";
+
+            if (butonYazisi != null) butonYazisi.text = "SAT";
+
+            // Butona basýnca 'Sat' fonksiyonu çalýþsýn
+            islemButonu.onClick.AddListener(SatisIslemi);
+        }
+        else
+        {
+            // --- ALIÞ MODU (Satýcýnýn Eþyasý) ---
+            fiyatText.text = $"{veri.satinAlmaFiyati} G";
+
+            if (butonYazisi != null) butonYazisi.text = "AL";
+
+            // Butona basýnca 'SatinAl' fonksiyonu çalýþsýn
+            islemButonu.onClick.AddListener(SatinAlmaIslemi);
+        }
     }
 
+    // MARKET -> OYUNCU (Eþya Al)
     void SatinAlmaIslemi()
     {
-        if (_esyaVeri == null || _ticaretYonetici == null) return;
+        if (_esyaVeri == null) return;
 
-        // Input alanýndan miktarý çek
+        int miktar = MiktariAl();
+
+        // Yöneticiye gönder
+        bool basarili = TicaretYonetici.Instance.SatinAl(_esyaVeri.esyaTipi, miktar);
+
+        if (basarili)
+        {
+            Debug.Log($"Baþarýyla {miktar} adet {_esyaVeri.gorunurAd} satýn alýndý.");
+        }
+    }
+
+    // OYUNCU -> MARKET (Eþya Sat)
+    void SatisIslemi()
+    {
+        if (_esyaVeri == null) return;
+
+        int miktar = MiktariAl();
+
+        // Yöneticiye gönder (Bu fonksiyonu TicaretYonetici'ye eklemiþtik)
+        // Not: Eðer TicaretYonetici'de toplu satýþ fonksiyonun yoksa, tek tek satmak için döngü kurabilirsin
+        // Þimdilik 1 adet satýyormuþ gibi veya manager'a miktar göndererek yapalým:
+
+        // Yönetici scriptinde 'OyuncudanEsyaSatinAl' metodunu miktar alacak þekilde güncelleyebilirsin
+        // Veya þimdilik döngü ile yapalým:
+        for (int i = 0; i < miktar; i++)
+        {
+            TicaretYonetici.Instance.OyuncudanEsyaSatinAl(_esyaVeri.esyaTipi);
+        }
+
+        // Satýþtan sonra listeyi güncellemek gerekir (Manager bunu halletmeli)
+    }
+
+    // Input alanýndan sayýyý güvenli þekilde çeken yardýmcý fonksiyon
+    int MiktariAl()
+    {
+        if (miktarInput == null) return 1;
+
         if (int.TryParse(miktarInput.text, out int miktar))
         {
-            if (miktar <= 0) miktar = 1; // Minimum 1 alým
-
-            // Ticaret Yöneticisi'ne iþlemi gönder
-            bool basarili = _ticaretYonetici.SatinAl(_esyaVeri.esyaTipi, miktar);
-
-            if (basarili)
-            {
-                // UI'ý güncellediðimizden emin ol (EkonomiUIManager bunu otomatik yapmalý)
-                // Ýsteðe baðlý: Baþarýlý mesajý göster
-                Debug.Log($"Basariyla {miktar} adet {_esyaVeri.gorunurAd} satin alindi.");
-            }
-            else
-            {
-                // Ýsteðe baðlý: Baþarýsýz mesajý göster (Yetersiz Bakiye/Envanter Dolu)
-            }
+            return miktar > 0 ? miktar : 1;
         }
+        return 1;
     }
 }
