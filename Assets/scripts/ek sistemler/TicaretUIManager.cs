@@ -71,11 +71,6 @@ public class TicaretUIManager : MonoBehaviour
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
-        // Envanteri kapat
-        if (InventoryUIManager.Instance != null)
-        {
-            InventoryUIManager.Instance.EnvanterAcKapat(false);
-        }
     }
 
     // LÝSTE DOLDURMA ÝÞLEMLERÝ

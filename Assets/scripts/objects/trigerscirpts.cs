@@ -1,66 +1,51 @@
 using UnityEngine;
-using TMPro;
 
-public class trigerscripts : MonoBehaviour
+// DÝKKAT: Artýk IInteractable sözleþmesini kullanýyor!
+public class trigerscripts : MonoBehaviour, IInteractable
 {
     [Header("UI & Ayarlar")]
-    public string iletisimMesaji = "[E] Kullan";
-    public KeyCode iletisimTusu = KeyCode.E;
+    public string iletisimMesaji = "Kullan"; // Mesajý buraya yaz (Örn: Kapýyý Aç)
 
-    private bool _oyuncuAlaniIcinde = false;
+    // Senin eski sistemindeki asýl iþi yapan arayüz (Kapý, NPC, Eþya scriptleri)
     private IIletisim _iletisimHedefi;
-    private GameObject _girenOyuncu;
-    private KarakterDurum _oyuncuIhtiyac;
 
-    private void OnTriggerEnter(Collider other)
+    private void Start()
     {
-        if (other.CompareTag("Player"))
+        // Bu objenin üzerindeki asýl yetenekli scripti bul (Örn: KapiAcmaScripti)
+        _iletisimHedefi = GetComponent<IIletisim>();
+
+        if (_iletisimHedefi == null)
         {
-            _oyuncuAlaniIcinde = true;
-            _iletisimHedefi = GetComponent<IIletisim>();
-            _girenOyuncu = other.gameObject;
-            if (_iletisimHedefi != null && UIManager.Instance != null)
+            Debug.LogError($"HATA: {gameObject.name} objesinde 'IIletisim' kullanan bir script yok!");
+        }
+    }
+
+    // --- RAYCAST SÝSTEMÝNÝN ÇAÐIRDIÐI FONKSÝYONLAR ---
+
+    // 1. Oyuncu 'E'ye bastýðýnda bu çalýþacak
+    public void Interact()
+    {
+        if (_iletisimHedefi != null)
+        {
+            // Senin eski sistemin çalýþmak için "Player" objesini istiyor.
+            // Raycast sisteminde 'other' olmadýðý için oyuncuyu Tag ile buluyoruz.
+            GameObject oyuncu = GameObject.FindGameObjectWithTag("Player");
+
+            if (oyuncu != null)
             {
-                UIManager.Instance.UyariyiGoster(iletisimMesaji);
+                // ESKÝ SÝSTEMÝ TETÝKLE
+                _iletisimHedefi.IletisimeGec(oyuncu);
+            }
+            else
+            {
+                Debug.LogError("HATA: Sahnede 'Player' tag'ine sahip bir oyuncu yok!");
             }
         }
     }
 
-    private void OnTriggerExit(Collider other)
+    // 2. Oyuncu buna baktýðýnda ekranda ne yazsýn?
+    public string GetInteractText()
     {
-        if (other.CompareTag("Player"))
-        {
-            _oyuncuAlaniIcinde = false;
-            _iletisimHedefi = null;
-            _girenOyuncu = null;
-            if (UIManager.Instance != null)
-            {
-                UIManager.Instance.UyariyiGizle();
-            }
-        }
-    }
-
-    void Update()
-    {
-        if (_oyuncuAlaniIcinde && _iletisimHedefi != null && Input.GetKeyDown(iletisimTusu))
-        {
-            IletisimiGerceklestir();
-
-            if (UIManager.Instance != null)
-            {
-                UIManager.Instance.UyariyiGizle();
-            }
-        }
-    }
-   
-    void IletisimiGerceklestir()
-    {
-        // Iletisim arayuzu metodu cagriliyor
-        
-        if (_girenOyuncu != null)
-        {
-            // Oyuncu objesini IletisimeGec metoduna gonder.
-            _iletisimHedefi.IletisimeGec(_girenOyuncu);
-        }
+        return iletisimMesaji;
     }
 }

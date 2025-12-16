@@ -78,7 +78,7 @@ public class TicaretYonetici : MonoBehaviour
         if (esyaVerisi == null) return;
 
         // Satýþ fiyatý (Alýþ fiyatýnýn yarýsý)
-        int satisFiyati = Mathf.FloorToInt(esyaVerisi.satinAlmaFiyati / 2);
+        int satisFiyati = esyaVerisi.satmaFiyati;
 
         // Envanterden 1 tane sil
         bool silindi = _oyuncuEnvanter.EsyaCikar(esyaTipi, 1);

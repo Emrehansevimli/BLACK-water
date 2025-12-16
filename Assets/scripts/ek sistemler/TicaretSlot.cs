@@ -48,7 +48,7 @@ public class TicaretSlot : MonoBehaviour
         if (_satisModu)
         {
             // --- SATIÞ MODU (Oyuncunun Eþyasý) ---
-            int satisFiyati = Mathf.FloorToInt(veri.satinAlmaFiyati / 2); // Yarý fiyatýna satalým
+            int satisFiyati = veri.satmaFiyati ; // Yarý fiyatýna satalým
             fiyatText.text = $"{satisFiyati} G";
 
             if (butonYazisi != null) butonYazisi.text = "SAT";
@@ -91,18 +91,11 @@ public class TicaretSlot : MonoBehaviour
 
         int miktar = MiktariAl();
 
-        // Yöneticiye gönder (Bu fonksiyonu TicaretYonetici'ye eklemiþtik)
-        // Not: Eðer TicaretYonetici'de toplu satýþ fonksiyonun yoksa, tek tek satmak için döngü kurabilirsin
-        // Þimdilik 1 adet satýyormuþ gibi veya manager'a miktar göndererek yapalým:
-
-        // Yönetici scriptinde 'OyuncudanEsyaSatinAl' metodunu miktar alacak þekilde güncelleyebilirsin
-        // Veya þimdilik döngü ile yapalým:
+       
         for (int i = 0; i < miktar; i++)
         {
             TicaretYonetici.Instance.OyuncudanEsyaSatinAl(_esyaVeri.esyaTipi);
-        }
-
-        // Satýþtan sonra listeyi güncellemek gerekir (Manager bunu halletmeli)
+        }   
     }
 
     // Input alanýndan sayýyý güvenli þekilde çeken yardýmcý fonksiyon

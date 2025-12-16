@@ -18,7 +18,7 @@ GameObject:
   - component: {fileID: 7738314143098644750}
   - component: {fileID: 194391630371062752}
   - component: {fileID: 7540907535887858029}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: koyun
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -130,13 +130,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HayvanDurum
   maksimumCan: 30
-  urunVermeyeHazir: 0
   ganimetPrefab: {fileID: 0}
   maksimumAclik: 100
-  _mevcutAclik: 79
+  mevcutAclik: 0
   aclikTuketimHizi: 5
   aclikHasariHizi: 1
   aclikSiniri: 80
+  urunVermeyeHazir: 0
 --- !u!114 &6339016159938923921
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -156,6 +156,7 @@ MonoBehaviour:
   barinaktaMi: 0
   barinagaDonmeAclikSeviyesi: 30
   yiyecekAramaBeklemeSuresi: 5
+  mevcutAclikDegeri: 0
 --- !u!114 &2226173719399767387
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -185,7 +186,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::trigerscripts
   iletisimMesaji: '[E] Kullan'
-  iletisimTusu: 101
 --- !u!195 &194391630371062752
 NavMeshAgent:
   m_ObjectHideFlags: 0

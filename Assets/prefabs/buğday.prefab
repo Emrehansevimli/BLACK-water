@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: 8649972724980946734}
   - component: {fileID: 7810127037900924976}
   - component: {fileID: 8062886430164335944}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: "bu\u011Fday"
   m_TagString: Yiyecek
   m_Icon: {fileID: 0}
@@ -108,7 +108,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 1
+  m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -127,7 +127,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::YiyecekKaynagi
   besinDegeri: 100
-  yokOlsunMu: 0
+  yokOlsunMu: 1
 --- !u!114 &7810127037900924976
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -154,4 +154,3 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::trigerscripts
   iletisimMesaji: '[E] Kullan'
-  iletisimTusu: 101
