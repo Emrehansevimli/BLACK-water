@@ -6,7 +6,10 @@ public enum EsyaTipi
     // Yiyecek/Tüketilebilir Öðeler
     Elma,
     Sandvic,
-
+    Bugday,
+    Yumurta,
+    Sut,
+    Havuc,
     // Bulmaca Parçalarý
     KagitParca_1,
     KagitParca_2,

@@ -26,38 +26,136 @@ public class OyuncuEnvanter : MonoBehaviour
         _karakterDurum = GetComponent<KarakterDurum>();
     }
 
-    public bool EsyaEkle(EsyaTipi tip)
+    //public bool EsyaEkle(EsyaTipi tip)
+    //{
+    //    EsyaVeriSO veri = InventoryUIManager.Instance.VeriGetir(tip);
+    //    if (veri == null) return false;
+
+    //    // 1. ADIM: Zaten var olan ve dolu olmayan bir yuvayý ara
+    //    for (int i = 0; i < hotbarBoyutu; i++)
+    //    {
+    //        if (hotbarSlotlari[i].tip == tip && hotbarSlotlari[i].miktar < veri.maksIstifBoyutu)
+    //        {
+    //            hotbarSlotlari[i].miktar++;
+    //            InventoryUIManager.Instance.EnvanteriGuncelle();
+    //            return true;
+    //        }
+    //    }
+
+    //    // 2. ADIM: Boþ bir yuva ara
+    //    for (int i = 0; i < hotbarBoyutu; i++)
+    //    {
+    //        if (hotbarSlotlari[i].miktar == 0) // Boþ yuva = miktarý 0 olan yuva
+    //        {
+    //            hotbarSlotlari[i].tip = tip;
+    //            hotbarSlotlari[i].miktar = 1;
+    //            InventoryUIManager.Instance.EnvanteriGuncelle();
+    //            return true;
+    //        }
+    //    }
+
+    //    Debug.Log("Hotbar dolu, esya eklenemedi.");
+    //    return false;
+    //}
+    public bool EsyaEkle(EsyaTipi tip, int miktar)
     {
-        EsyaVeriSO veri = InventoryUIManager.Instance.VeriGetir(tip);
-        if (veri == null) return false;
+        if (miktar <= 0) return true; // Eðer eklenen miktar 0 veya altýndaysa baþarýlý sayabiliriz.
 
-        // 1. ADIM: Zaten var olan ve dolu olmayan bir yuvayý ara
-        for (int i = 0; i < hotbarBoyutu; i++)
+        // 1. Mevcut Slotlarda Ýstifleme Kontrolü
+        for (int i = 0; i < hotbarSlotlari.Length; i++)
         {
-            if (hotbarSlotlari[i].tip == tip && hotbarSlotlari[i].miktar < veri.maksIstifBoyutu)
+            // Ayný tipte eþya ve yuvada yer varsa
+            if (hotbarSlotlari[i].tip == tip)
             {
-                hotbarSlotlari[i].miktar++;
-                InventoryUIManager.Instance.EnvanteriGuncelle();
-                return true;
+                int maxIstif = InventoryUIManager.Instance.VeriGetir(tip).maxIstifBoyutu;
+                int eklenebilecekBosluk = maxIstif - hotbarSlotlari[i].miktar;
+
+                if (eklenebilecekBosluk > 0)
+                {
+                    int eklenecekMiktar = Mathf.Min(miktar, eklenebilecekBosluk);
+                    hotbarSlotlari[i].miktar += eklenecekMiktar;
+                    miktar -= eklenecekMiktar;
+                    InventoryUIManager.Instance.EnvanteriGuncelle();
+                    if (miktar == 0) return true; // Tüm eþyalar eklendi
+                    
+                }
+                
             }
         }
-
-        // 2. ADIM: Boþ bir yuva ara
-        for (int i = 0; i < hotbarBoyutu; i++)
+        InventoryUIManager.Instance.EnvanteriGuncelle();
+        // 2. Kalan Eþyayý Yeni Boþ Slotlara Ekleme
+        for (int i = 0; i < hotbarSlotlari.Length && miktar > 0; i++)
         {
-            if (hotbarSlotlari[i].miktar == 0) // Boþ yuva = miktarý 0 olan yuva
+            if (hotbarSlotlari[i].tip == EsyaTipi.Bos)
             {
+                int maxIstif = InventoryUIManager.Instance.VeriGetir(tip).maxIstifBoyutu;
                 hotbarSlotlari[i].tip = tip;
-                hotbarSlotlari[i].miktar = 1;
+
+                int eklenecekMiktar = Mathf.Min(miktar, maxIstif);
+                hotbarSlotlari[i].miktar = eklenecekMiktar;
+                miktar -= eklenecekMiktar;
                 InventoryUIManager.Instance.EnvanteriGuncelle();
-                return true;
+                if (miktar == 0) return true; // Tüm eþyalar eklendi
             }
         }
 
-        Debug.Log("Hotbar dolu, esya eklenemedi.");
-        return false;
-    }
+        // Eðer miktar > 0 ise, envanter doludur ve eþyanýn tamamý eklenememiþtir.
+        // Baþarýlý saymak için ilk baþta eklenen eþyalarýn da kabul edilmesi gerekir,
+        // ancak ticarette tam miktarýn alýnmasý beklenir.
+        if (miktar > 0)
+        {
+            Debug.Log("Envanterde yeterli yer yok, satin alma iptal edildi.");
+            
+            return false;
+        }
 
+        InventoryUIManager.Instance.EnvanteriGuncelle();
+
+        return true;
+    }
+    public bool EsyaCikar(EsyaTipi tip, int miktar)
+    {
+        if (miktar <= 0) return true;
+
+        int toplamMiktar = 0;
+        foreach (var slot in hotbarSlotlari)
+        {
+            if (slot.tip == tip)
+            {
+                toplamMiktar += slot.miktar;
+            }
+        }
+
+        if (toplamMiktar < miktar)
+        {
+            return false; 
+        }
+
+        int kalanMiktar = miktar;
+        for (int i = 0; i < hotbarSlotlari.Length && kalanMiktar > 0; i++)
+        {
+            if (hotbarSlotlari[i].tip == tip)
+            {
+                if (hotbarSlotlari[i].miktar >= kalanMiktar)
+                {
+                    hotbarSlotlari[i].miktar -= kalanMiktar;
+                    if (hotbarSlotlari[i].miktar == 0)
+                    {
+                        hotbarSlotlari[i].tip = EsyaTipi.Bos;
+                    }
+                    kalanMiktar = 0;
+                }
+                else
+                {
+                    kalanMiktar -= hotbarSlotlari[i].miktar;
+                    hotbarSlotlari[i].tip = EsyaTipi.Bos;
+                    hotbarSlotlari[i].miktar = 0;
+                }
+            }
+        }
+        InventoryUIManager.Instance.EnvanteriGuncelle();
+        return true;
+    }
     public void SeciliEsyayiKullan()
     {
         EnvanterYuvasi seciliYuva = hotbarSlotlari[seciliSlotIndex];

@@ -197,7 +197,7 @@ public class CraftingUIManager : MonoBehaviour
         }
 
         // 2. Sonucu Envantere Ekle (Bu kýsým ayný kalýr)
-        _oyuncuEnvanteri.EsyaEkle(tarif.sonucEsya);
+        _oyuncuEnvanteri.EsyaEkle(tarif.sonucEsya, tarif.sonucMiktari);
 
         Debug.Log($"[{tarif.name}] tarifi basarili! Uretilen: {tarif.sonucEsya}");
 

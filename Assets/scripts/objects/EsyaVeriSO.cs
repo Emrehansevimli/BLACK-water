@@ -17,7 +17,7 @@ public class EsyaVeriSO : ScriptableObject
     // Her esyanin envanterdeki RESMI (ICON)
     public Sprite ikon;
 
-    public int maksIstifBoyutu = 99; // Kac tanesinin ust uste binebilecegi (Stack size)
+    public int maxIstifBoyutu = 99; // Kac tanesinin ust uste binebilecegi (Stack size)
 
     [Header("Kullaným Etkisi")]
     public float canEtkisi = 0f; 
@@ -26,4 +26,10 @@ public class EsyaVeriSO : ScriptableObject
     [Header("Dünya Modeli")]
     // YENÝ EKLENEN: Esya atildiginda dunyada olusacak 3D model.
     public GameObject esyaModelPrefab;
+    [Header("Ekonomi Degerleri")]
+    [Tooltip("Bu eþyayi NPC'den satin alma fiyati.")]
+    public int satinAlmaFiyati = 10;
+    [Tooltip("Bu eþyayi NPC'ye satma fiyati (genellikle alis fiyatindan düsük).")]
+    public int satmaFiyati = 8;
+    public bool satilabilirMi = true;
 }

@@ -25,6 +25,10 @@ public class KarakterDurum : MonoBehaviour
     [HideInInspector]
     public bool staminaKullaniliyor = false;
 
+    [Header("Ekonomi")]
+    [SerializeField]
+    private int _mevcutPara = 100;
+    public int MevcutPara => _mevcutPara;
     void Start()
     {
         _mevcutCan = 50;
@@ -39,6 +43,35 @@ public class KarakterDurum : MonoBehaviour
         StaminaYonetimi();
 
     }
+    public void ParaEkle(int miktar)
+    {
+        if (miktar <= 0) return;
+        _mevcutPara += miktar;
+        Debug.Log($"{miktar} para eklendi. Yeni miktar: {_mevcutPara}");
+        if (EkonomiUIManager.Instance != null)
+        {
+            EkonomiUIManager.Instance.GuncelParayiGoster();
+        }
+    }
+
+    public bool ParaCikar(int miktar)
+    {
+        if (miktar <= 0) return false;
+
+        if (_mevcutPara >= miktar)
+        {
+            _mevcutPara -= miktar;
+            Debug.Log($"{miktar} para harcandi. Kalan miktar: {_mevcutPara}");
+            if (EkonomiUIManager.Instance != null)
+            {
+                EkonomiUIManager.Instance.GuncelParayiGoster();
+            }
+            return true;
+        }
+
+        Debug.Log("Yeterli paraniz yok!");
+        return false;
+    }
     private void GuncelleCanBari()
     {
         
@@ -52,16 +85,13 @@ public class KarakterDurum : MonoBehaviour
     {
         if (staminaKullaniliyor)
         {
-            // Hýzlý koþuyorsak staminayý tüket
+            
             _mevcutStamina -= staminaTuketimHizi * Time.deltaTime;
         }
         else
         {
-            // Koþmuyorsak staminayý yenile
             _mevcutStamina += staminaYenilenmeHizi * Time.deltaTime;
         }
-
-        // Deðeri 0 ile maksimum arasýnda sýkýþtýr
         _mevcutStamina = Mathf.Clamp(_mevcutStamina, 0f, maksimumStamina);
 
         GuncelleStaminaBari();
