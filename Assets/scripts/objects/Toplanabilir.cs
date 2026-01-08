@@ -16,6 +16,11 @@ public class Toplanabilir : MonoBehaviour, IIletisim
             if (eklendi)
             {
                 Destroy(gameObject);
+                /////XP KAZANMAK ÝÇÝN HER YERDE BU KULLANILACAK
+                if (ExperienceManager.Instance != null)
+                {
+                    ExperienceManager.Instance.AddXP(20); 
+                }
             }
         }
     }

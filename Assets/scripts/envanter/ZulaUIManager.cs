@@ -18,10 +18,13 @@ public class ZulaUIManager : MonoBehaviour
     // O an açýk olan envanterler
     private OyuncuEnvanter _oyuncuEnvanteri;
     private Zula _aktifZula;
-
+    private charactercontroller _karakterHareket;
     // Oluþturulan UI yuvalarýný tutan listeler
     private List<DepoYuvaUI> _oyuncuYuvaUIs = new List<DepoYuvaUI>();
     private List<DepoYuvaUI> _zulaYuvaUIs = new List<DepoYuvaUI>();
+    //
+    private bool _isOpen = false;
+    public bool IsOpen => _isOpen;
 
     void Awake()
     {
@@ -37,13 +40,20 @@ public class ZulaUIManager : MonoBehaviour
     {
         _oyuncuEnvanteri = oyuncu;
         _aktifZula = zula;
-
+        _isOpen = true;
         zulaPaneli.SetActive(true);
         // Karakter hareketini durdur ve fareyi aç
         if (CraftingUIManager.Instance != null)
         {
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
+            if (_karakterHareket != null)
+            {
+                _karakterHareket.hareketEdebilir = true;
+
+                // (Opsiyonel) Eðer karakter kaymaya devam ediyorsa hýzý sýfýrla:
+                // _karakterHareket.GetComponent<Rigidbody>().linearVelocity = Vector3.zero;
+            }
         }
 
         // Yuvalarý oluþtur ve doldur
@@ -61,6 +71,7 @@ public class ZulaUIManager : MonoBehaviour
         }
         _oyuncuEnvanteri = null;
         _aktifZula = null;
+        _isOpen = false;
         if (InventoryUIManager.Instance != null)
         {
             InventoryUIManager.Instance.EnvanteriGuncelle();

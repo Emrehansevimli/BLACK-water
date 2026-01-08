@@ -4,23 +4,24 @@ using UnityEngine;
 public class charactercontroller : MonoBehaviour
 {
 
+    [Header("Karakter Verisi (KÝMLÝK KARTI)")]
+    public KarakterVerisiSO karakterVerisi;
+
+    // Mevcut deðiþkenlerin (Bunlar artýk veriden okunacak)
+    public float yürümeHizi; // Inspector'dan deðiþtirmene gerek kalmayacak
+    public float zýplamaKuvveti;
+    public float kosmaHizi;
+
+   
+
+
     private OyuncuEnvanter _envanter;
     private CharacterController _controller;
     private KarakterDurum _karakterDurum;
-
-    // Hareket Hýzlarý
-    public float yürümeHizi = 6.0f;
-    public float zýplamaKuvveti = 8.0f;
+    public bool hareketEdebilir = true;   
     public float yercekimi = 20.0f;
-    public float kosmaHizi = 10.0f;
-    // Dikey (Y ekseni) hýzý tutan vektör
     private Vector3 _hizVektoru;
-
-
-    // Karakter rotasyonu için hassasiyet
     public float fareHassasiyeti = 100f;
-
-    // Kamerayý Inspector'da sürükleyip býrakýn
     public Transform kameraTransform;
 
     private float _xRotasyon = 0f;
@@ -45,11 +46,33 @@ public class charactercontroller : MonoBehaviour
         {
             kameraTransform = GetComponentInChildren<Camera>()?.transform;
         }
+        if (karakterVerisi != null)
+        {
+            // Hareket verilerini aktar
+            this.yürümeHizi = karakterVerisi.yurumeHizi;
+            this.kosmaHizi = karakterVerisi.kosmaHizi;
+            this.zýplamaKuvveti = karakterVerisi.ziplamaKuvveti;
+
+            // Can verisini aktar (Eðer KarakterDurum scriptin varsa)
+            if (_karakterDurum != null)
+            {
+                _karakterDurum.KarakterOzellikleriniAyarla(karakterVerisi.maxCan, karakterVerisi.stamina);
+            }
+
+            Debug.Log($"Seçilen Karakter: {karakterVerisi.karakterAdi} yüklendi.");
+        }
     }
     void Update()
     {
         // 1. UI Kontrolü (Hareketi hemen kes)
-        _uiAcik = CraftingUIManager.Instance != null && CraftingUIManager.Instance.IsPanelOpen;
+        //_uiAcik = CraftingUIManager.Instance != null && CraftingUIManager.Instance.IsPanelOpen;
+        bool craftingAcik = CraftingUIManager.Instance != null && CraftingUIManager.Instance.IsPanelOpen;
+
+        // YENÝ: Ticaret Açýk mý? (Eðer script sahnede varsa kontrol et)
+        bool ticaretAcik = TicaretUIManager.Instance != null && TicaretUIManager.Instance.IsOpen;
+        bool zulaAcik = ZulaUIManager.Instance != null && ZulaUIManager.Instance.IsOpen;
+        // Herhangi biri açýksa VEYA hareket izni manuel olarak kapatýldýysa
+        _uiAcik = craftingAcik || ticaretAcik || zulaAcik || !hareketEdebilir;
         if (_uiAcik)
         {
             // UI açýkken fare imlecini göster

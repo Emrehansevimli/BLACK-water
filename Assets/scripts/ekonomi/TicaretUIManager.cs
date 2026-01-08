@@ -10,7 +10,7 @@ public class TicaretUIManager : MonoBehaviour
     [Header("UI Referanslari")]
     public GameObject ticaretPaneli;
     public GameObject ticaretSlotPrefab; // Slot prefabý
-
+    
     [Header("Liste Alanlarý")]
     public Transform saticiContent; // SOL Taraf (Satýcýnýn mallarý) -> Eskiden 'satisListesiIcerik'ti
     public Transform oyuncuContent; // SAÐ Taraf (Oyuncunun mallarý) -> YENÝ
@@ -21,7 +21,7 @@ public class TicaretUIManager : MonoBehaviour
 
     private bool _isOpen = false;
     public bool IsOpen => _isOpen; // Dýþarýdan okumak için property
-
+    private charactercontroller _karakterHareket;
     void Awake()
     {
         if (Instance == null) Instance = this;
@@ -41,10 +41,16 @@ public class TicaretUIManager : MonoBehaviour
             Debug.LogError("HATA: Ticaret Paneli Inspector'da atanmamýþ!");
             return;
         }
-
-        _isOpen = true;
         ticaretPaneli.SetActive(true);
+        _isOpen = true;
 
+        if (_karakterHareket != null)
+        {
+            _karakterHareket.hareketEdebilir = true;
+
+            // (Opsiyonel) Eðer karakter kaymaya devam ediyorsa hýzý sýfýrla:
+            // _karakterHareket.GetComponent<Rigidbody>().linearVelocity = Vector3.zero;
+        }
         // Mouse'u aç
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;

@@ -1,7 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-
 public class KarakterDurum : MonoBehaviour
 {
     [Header("Durum Degerleri")]
@@ -16,9 +15,10 @@ public class KarakterDurum : MonoBehaviour
     private float _mevcutCan;
     public float maksimumIhtiyac = 100f;
     public float kritikSeviye = 80f;
+
     [Header("Stamina Degerleri")]
     public float maksimumStamina = 100f;
-    [SerializeField] 
+    [SerializeField]
     private float _mevcutStamina;
     public float staminaTuketimHizi = 20f; // Saniyede ne kadar harcayacaðý
     public float staminaYenilenmeHizi = 15f;
@@ -29,20 +29,42 @@ public class KarakterDurum : MonoBehaviour
     [SerializeField]
     private int _mevcutPara = 100;
     public int MevcutPara => _mevcutPara;
+
     void Start()
     {
-        _mevcutCan = 50;
-        _mevcutStamina = maksimumStamina; // Staminayý da doldur
+        // BURAYI UFAK REVÝZE ETTÝM: Elle 50 yazmak yerine maksimum neyse o baþlasýn.
+        // Böylece Tank seçersen 200, Hýzlý seçersen 70 baþlar.
+        _mevcutCan = maksimumCan;
+        _mevcutStamina = maksimumStamina;
+
         GuncelleCanBari();
         GuncelleStaminaBari();
     }
+
     void Update()
     {
         mevcutIhtiyac += ihtiyacArtisHizi * Time.deltaTime;
         mevcutIhtiyac = Mathf.Min(mevcutIhtiyac, maksimumIhtiyac);
         StaminaYonetimi();
-
     }
+
+    // --- YENÝ EKLENEN KISIM (Sadece burasý yeni) ---
+    // Diðer script (CharacterController) burayý çaðýrýp özellikleri deðiþtirecek
+    public void KarakterOzellikleriniAyarla(float yeniMaxCan, float yeniMaxStamina)
+    {
+        maksimumCan = yeniMaxCan;
+        maksimumStamina = yeniMaxStamina;
+
+        // Yeni özelliklere göre caný ve staminayý fulle
+        _mevcutCan = maksimumCan;
+        _mevcutStamina = maksimumStamina;
+
+        // Barlarý güncelle ki oyuncu hemen görsün
+        GuncelleCanBari();
+        GuncelleStaminaBari();
+    }
+    // ------------------------------------------------
+
     public void ParaEkle(int miktar)
     {
         if (miktar <= 0) return;
@@ -72,20 +94,20 @@ public class KarakterDurum : MonoBehaviour
         Debug.Log("Yeterli paraniz yok!");
         return false;
     }
+
     private void GuncelleCanBari()
     {
-        
         if (canBariSlider != null)
         {
             float canYuzdesi = _mevcutCan / maksimumCan;
             canBariSlider.value = canYuzdesi;
         }
     }
+
     private void StaminaYonetimi()
     {
         if (staminaKullaniliyor)
         {
-            
             _mevcutStamina -= staminaTuketimHizi * Time.deltaTime;
         }
         else
@@ -97,10 +119,8 @@ public class KarakterDurum : MonoBehaviour
         GuncelleStaminaBari();
     }
 
-    // Stamina olup olmadýðýný kontrol eden public metot
     public bool StaminaVarMi()
     {
-        // Sadece 0'dan büyükse deðil, biraz pay býrakarak kontrol etmek daha iyi olabilir
         return _mevcutStamina > 0.1f;
     }
 
@@ -112,28 +132,27 @@ public class KarakterDurum : MonoBehaviour
             staminaBariSlider.value = staminaYuzdesi;
         }
     }
+
     public bool IhtiyaciGider()
     {
-        if (mevcutIhtiyac >= giderilmeMiktari * 0.1f) // Cok az da olsa ihtiyac varsa
+        if (mevcutIhtiyac >= giderilmeMiktari * 0.1f)
         {
-            mevcutIhtiyac = 0f; // Tamamen sifirla
-
+            mevcutIhtiyac = 0f;
             Debug.Log("Tuvalet ihtiyaci giderildi ve sifirlandi.");
             return true;
         }
-
         Debug.Log("Henüz tuvalet yapmaya yeterli ihtiyac yok.");
         return false;
     }
-  
+
     public void CanArtir(float miktar)
     {
         if (miktar <= 0)
         {
             Debug.LogWarning("Can artirma miktari pozitif olmalidir.");
             return;
-        }       
-        _mevcutCan += miktar;    
+        }
+        _mevcutCan += miktar;
         _mevcutCan = Mathf.Min(_mevcutCan, maksimumCan);
         Debug.Log($"{miktar} can kazanildi. Yeni can degeri: {_mevcutCan} / {maksimumCan}");
         GuncelleCanBari();
@@ -146,7 +165,7 @@ public class KarakterDurum : MonoBehaviour
         _mevcutCan -= hasar;
 
         GuncelleCanBari();
-        
+
         if (_mevcutCan <= 0)
         {
             _mevcutCan = 0;
@@ -154,13 +173,11 @@ public class KarakterDurum : MonoBehaviour
         }
 
         Debug.Log($"{hasar} hasar alindi. Kalan can: {_mevcutCan}");
-        // Buraya Hasar UI Geri Bildirimi eklenebilir
     }
 
     private void Olüm()
     {
         Debug.Log($"{gameObject.name} hayatini kaybetti!");
-
         GuncelleCanBari();
     }
 }

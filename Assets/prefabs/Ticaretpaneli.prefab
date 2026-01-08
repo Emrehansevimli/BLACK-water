@@ -1124,13 +1124,14 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7761176734751894496}
+  - component: {fileID: 1000946702261166958}
   m_Layer: 0
   m_Name: Ticaretpaneli
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &7761176734751894496
 Transform:
   m_ObjectHideFlags: 0
@@ -1154,6 +1155,14 @@ Transform:
   - {fileID: 980032234261164355}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!222 &1000946702261166958
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4193345064860669070}
+  m_CullTransparentMesh: 1
 --- !u!1 &4223103922309382768
 GameObject:
   m_ObjectHideFlags: 0

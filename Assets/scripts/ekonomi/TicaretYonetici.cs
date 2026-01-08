@@ -5,7 +5,7 @@ public class TicaretYonetici : MonoBehaviour
     // 1. HATA ÇÖZÜMÜ: Singleton Instance Tanýmý
     public static TicaretYonetici Instance;
 
-    // Oyuncu referanslarý
+    // Oyuncu referansla
     private OyuncuEnvanter _oyuncuEnvanter;
     private KarakterDurum _karakterDurum;
 
